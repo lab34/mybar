@@ -8,13 +8,14 @@
 import Foundation
 
 struct DiskSpaceInfo: Codable, Equatable {
-    let availableSpace: Double    // en GB
-    let totalSpace: Double        // en GB
+    let availableSpace: Double    // en GiB (base 1024)
+    let totalSpace: Double        // en GiB (base 1024)
     let timestamp: Date
 
     init(availableBytes: UInt64, totalBytes: UInt64) {
-        self.availableSpace = Double(availableBytes) / (1024 * 1024 * 1024)
-        self.totalSpace = Double(totalBytes) / (1024 * 1024 * 1024)
+        // Utiliser la base 1024 (GiB) comme df -h pour cohérence
+        self.availableSpace = Double(availableBytes) / (1024.0 * 1024.0 * 1024.0)
+        self.totalSpace = Double(totalBytes) / (1024.0 * 1024.0 * 1024.0)
         self.timestamp = Date()
     }
 }
@@ -33,12 +34,12 @@ class DiskSpaceMonitor: ObservableObject {
     private let alternativePaths: [String]
 
     init() {
-        // CORRIGÉ: Utiliser une approche simple et robuste
-        // La racine "/" est presque toujours le bon chemin sur macOS
-        primaryVolumePath = "/"
+        // CORRIGÉ: Sur macOS avec APFS, les données utilisateur sont sur /System/Volumes/Data
+        // La racine "/" est souvent un snapshot en lecture seule
+        primaryVolumePath = "/System/Volumes/Data"
 
         // Chemins alternatifs à tester en cas d'échec
-        alternativePaths = ["/System/Volumes/Data", "/Volumes/Macintosh HD"]
+        alternativePaths = ["/", "/Volumes/Macintosh HD"]
 
         print("🔍 MyBar: Initialising with primary volume path: \(primaryVolumePath)")
         debugInfo = "Testing path: \(primaryVolumePath)"
