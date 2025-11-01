@@ -172,6 +172,9 @@ class DiskSpaceMonitor: ObservableObject {
                 self.errorMessage = nil
                 self.debugInfo = "✅ Updated using: \(path)"
                 print("✅ MyBar: Successfully updated - Available: \(diskInfo.availableSpace)GB, Total: \(diskInfo.totalSpace)GB")
+
+                // Notifier les observers que les données ont été mises à jour
+                NotificationCenter.default.post(name: NSNotification.Name("DiskSpaceUpdated"), object: diskInfo)
             }
 
             return true

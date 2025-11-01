@@ -12,16 +12,16 @@ struct MenuBarView: View {
     @StateObject private var storageManager = StorageManager()
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
             if let currentSpace = diskMonitor.currentSpace {
-                // Affichage normal quand les données sont disponibles
-                VStack(spacing: 2) {
+                // Affichage compact sur une seule ligne
+                HStack(spacing: 4) {
                     Text(diskMonitor.formatGB(currentSpace.availableSpace))
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
 
                     if storageManager.dailyDelta != 0.0 {
                         Text(storageManager.formatDelta(storageManager.dailyDelta))
-                            .font(.system(size: 10, weight: .regular, design: .monospaced))
+                            .font(.system(size: 11, weight: .regular, design: .monospaced))
                             .foregroundColor(storageManager.dailyDelta < 0 ? .red : .green)
                     }
                 }
@@ -34,48 +34,32 @@ struct MenuBarView: View {
                     }
                 }
 
-            } else if let errorMessage = diskMonitor.errorMessage {
-                // Affichage amélioré en cas d'erreur
-                VStack(spacing: 1) {
+            } else if diskMonitor.errorMessage != nil {
+                HStack(spacing: 2) {
                     Text("-- GB")
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundColor(.orange)
-
                     Text("⚠️")
-                        .font(.system(size: 8))
+                        .font(.system(size: 10))
                         .foregroundColor(.orange)
                 }
 
             } else {
-                // État loading amélioré avec plus d'informations
-                VStack(spacing: 1) {
-                    HStack(spacing: 2) {
-                        Text("Loading")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundColor(.gray)
-
-                        // Indicateur d'activité simple
-                        Text(loadingIndicator)
-                            .font(.system(size: 11))
-                            .foregroundColor(.gray)
-                    }
-
-                    // Info de debug en mode développement
-                    #if DEBUG
-                    if !diskMonitor.debugInfo.isEmpty {
-                        Text(diskMonitor.debugInfo)
-                            .font(.system(size: 8))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    #endif
+                // État loading compact
+                HStack(spacing: 2) {
+                    Text("Loading")
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundColor(.gray)
+                    Text(loadingIndicator)
+                        .font(.system(size: 10))
+                        .foregroundColor(.gray)
                 }
                 .onAppear {
                     diskMonitor.startMonitoring()
                 }
             }
         }
-        .frame(minWidth: 60, maxWidth: 120)
+        .frame(minWidth: 80, maxWidth: 150)
     }
 
     // Indicateur de loading animé
