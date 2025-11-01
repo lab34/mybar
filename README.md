@@ -4,12 +4,14 @@ Application macOS native légère qui affiche l'espace disque disponible dans la
 
 ## Fonctionnalités
 
-- Affichage en temps réel de l'espace disque disponible sur le volume principal
+- **Affichage direct** de l'espace disque dans la barre de menus (pas d'icône à cliquer)
+- Format : "XXX.X GB (+/-X.X GB)" avec variation journalière
 - Calcul du delta (variation) depuis le début de la journée
 - Mise à jour automatique toutes les 5 minutes
 - Consommation minimale de CPU et batterie
 - Compatible Apple Silicon natif
-- Interface minimaliste dans la barre de menus macOS
+- Application invisible (pas d'icône dans le Dock)
+- Menu contextuel simple pour quitter l'application
 
 ## Configuration requise
 
@@ -28,15 +30,25 @@ open MyBar.xcodeproj
 
 ## Utilisation
 
-L'application s'installe automatiquement dans la barre de menus et affiche :
+L'application s'installe automatiquement dans la barre de menus et **affiche directement** :
 - Espace disque disponible (ex: "156.2 GB")
 - Variation depuis le début de journée (ex: "-2.1 GB")
 
+**Important** : L'information est visible en permanence dans la barre de menus, **sans avoir besoin de cliquer sur une icône**.
+
 L'application se met à jour automatiquement sans intervention utilisateur.
+
+Cliquez droit sur le texte pour accéder au menu et quitter l'application.
 
 ## Architecture
 
-Projet SwiftUI avec MenuBarExtra pour une intégration native macOS optimisée pour les performances et l'économie d'énergie.
+Projet **hybride SwiftUI + AppKit** utilisant :
+- **NSStatusItem** pour l'affichage direct du texte dans la barre de menus
+- **AppDelegate** pour la gestion du cycle de vie
+- **SwiftUI** pour les composants réactifs (DiskSpaceMonitor, StorageManager)
+- **Foundation** pour l'accès système et la persistance
+
+Cette architecture offre un contrôle total sur l'affichage tout en maintenant la simplicité et les performances.
 
 ## License
 
