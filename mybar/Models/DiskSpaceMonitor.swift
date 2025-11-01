@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct DiskSpaceInfo: Codable {
+struct DiskSpaceInfo: Codable, Equatable {
     let availableSpace: Double    // en GB
     let totalSpace: Double        // en GB
     let timestamp: Date
@@ -23,27 +23,87 @@ class DiskSpaceMonitor: ObservableObject {
     @Published var currentSpace: DiskSpaceInfo?
     @Published var isMonitoring = false
     @Published var errorMessage: String?
+    @Published var debugInfo: String = ""
 
     private let fileManager = FileManager.default
     private var monitoringTimer: Timer?
 
-    // Volume principal à surveiller
-    private let primaryVolumePath = "/"
+    // Volume principal à surveiller - CORRIGÉ
+    private let primaryVolumePath: String
+    private let alternativePaths: [String]
 
     init() {
-        // Vérifier si on est sur macOS avec APFS et prendre le bon chemin
-        #if targetEnvironment(macCatalyst) || os(macOS)
-        if let volumes = fileManager.urls(forDirectory: .documentDirectory, inDomains: .localDomainMask).first,
-           let volume = volumes.pathComponents.first,
-           volume != "/" {
-            primaryVolumePath = "/\(volume)"
+        // CORRIGÉ: Utiliser une approche simple et robuste
+        // La racine "/" est presque toujours le bon chemin sur macOS
+        primaryVolumePath = "/"
+
+        // Chemins alternatifs à tester en cas d'échec
+        alternativePaths = ["/System/Volumes/Data", "/Volumes/Macintosh HD"]
+
+        print("🔍 MyBar: Initialising with primary volume path: \(primaryVolumePath)")
+        debugInfo = "Testing path: \(primaryVolumePath)"
+
+        // Test initial pour valider le chemin
+        testVolumePath()
+    }
+
+    private func testVolumePath() {
+        let url = URL(fileURLWithPath: primaryVolumePath)
+
+        do {
+            let resourceValues = try url.resourceValues(forKeys: [
+                .volumeAvailableCapacityForImportantUsageKey,
+                .volumeTotalCapacityKey
+            ])
+
+            if resourceValues.volumeAvailableCapacityForImportantUsage != nil &&
+               resourceValues.volumeTotalCapacity != nil {
+                print("✅ MyBar: Volume path \(primaryVolumePath) is accessible")
+                debugInfo = "✅ Path accessible: \(primaryVolumePath)"
+            } else {
+                print("⚠️ MyBar: Volume path \(primaryVolumePath) exists but no capacity info")
+                debugInfo = "⚠️ No capacity info for \(primaryVolumePath)"
+            }
+        } catch {
+            print("❌ MyBar: Error accessing \(primaryVolumePath): \(error.localizedDescription)")
+            debugInfo = "❌ Error: \(error.localizedDescription)"
+
+            // Essayer les chemins alternatifs
+            testAlternativePaths()
         }
-        #endif
+    }
+
+    private func testAlternativePaths() {
+        for path in alternativePaths {
+            let url = URL(fileURLWithPath: path)
+
+            do {
+                let resourceValues = try url.resourceValues(forKeys: [
+                    .volumeAvailableCapacityForImportantUsageKey,
+                    .volumeTotalCapacityKey
+                ])
+
+                if resourceValues.volumeAvailableCapacityForImportantUsage != nil &&
+                   resourceValues.volumeTotalCapacity != nil {
+                    print("✅ MyBar: Alternative path \(path) works!")
+                    debugInfo = "✅ Alternative path works: \(path)"
+                    // Note: Dans une implémentation complète, on pourrait
+                    // stocker ce chemin fonctionnel pour l'utiliser
+                    break
+                }
+            } catch {
+                print("❌ MyBar: Alternative path \(path) failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     func startMonitoring() {
-        guard !isMonitoring else { return }
+        guard !isMonitoring else {
+            print("⚠️ MyBar: Already monitoring")
+            return
+        }
 
+        print("🚀 MyBar: Starting disk space monitoring")
         isMonitoring = true
         updateDiskSpace()
 
@@ -57,35 +117,68 @@ class DiskSpaceMonitor: ObservableObject {
     }
 
     func stopMonitoring() {
+        print("⏹ MyBar: Stopping monitoring")
         isMonitoring = false
         monitoringTimer?.invalidate()
         monitoringTimer = nil
     }
 
     private func updateDiskSpace() {
+        print("🔄 MyBar: Updating disk space info...")
+
+        // Essayer d'abord le chemin principal
+        if tryUpdateDiskSpace(for: primaryVolumePath) {
+            return
+        }
+
+        // Si échec, essayer les chemins alternatifs
+        for path in alternativePaths {
+            if tryUpdateDiskSpace(for: path) {
+                print("✅ MyBar: Successfully used alternative path: \(path)")
+                return
+            }
+        }
+
+        // Si tous les chemins échouent
+        let error = DiskSpaceError.unableToReadDiskInfo
+        DispatchQueue.main.async {
+            self.errorMessage = "Impossible de lire l'espace disque: \(error.localizedDescription)"
+            self.debugInfo = "❌ All paths failed"
+            print("❌ MyBar: All volume paths failed")
+        }
+    }
+
+    private func tryUpdateDiskSpace(for path: String) -> Bool {
         do {
-            let resourceValues = try fileManager.resourceValues(forKeys: [
+            let url = URL(fileURLWithPath: path)
+            let resourceValues = try url.resourceValues(forKeys: [
                 .volumeAvailableCapacityForImportantUsageKey,
                 .volumeTotalCapacityKey
-            ], at: URL(fileURLWithPath: primaryVolumePath))
+            ])
 
             guard let availableBytes = resourceValues.volumeAvailableCapacityForImportantUsage,
                   let totalBytes = resourceValues.volumeTotalCapacity else {
-                throw DiskSpaceError.unableToReadDiskInfo
+                print("⚠️ MyBar: No capacity values for path: \(path)")
+                return false
             }
 
+            let diskInfo = DiskSpaceInfo(
+                availableBytes: UInt64(availableBytes),
+                totalBytes: UInt64(totalBytes)
+            )
+
             DispatchQueue.main.async {
-                self.currentSpace = DiskSpaceInfo(
-                    availableBytes: availableBytes,
-                    totalBytes: totalBytes
-                )
+                self.currentSpace = diskInfo
                 self.errorMessage = nil
+                self.debugInfo = "✅ Updated using: \(path)"
+                print("✅ MyBar: Successfully updated - Available: \(diskInfo.availableSpace)GB, Total: \(diskInfo.totalSpace)GB")
             }
+
+            return true
 
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = "Erreur lecture espace disque: \(error.localizedDescription)"
-            }
+            print("❌ MyBar: Error updating disk space for \(path): \(error.localizedDescription)")
+            return false
         }
     }
 
