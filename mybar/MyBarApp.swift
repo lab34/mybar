@@ -36,7 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem?.button {
             button.title = "Loading..."
-            button.font = NSFont.systemFont(ofSize: 0) // Police système par défaut
+            button.font = NSFont.systemFont(ofSize: 11) // Police plus petite
 
             // Ajouter un menu simple
             let menu = NSMenu()
