@@ -12,6 +12,7 @@ Application macOS native légère qui affiche l'espace disque disponible dans la
 - Compatible Apple Silicon natif
 - Application invisible (pas d'icône dans le Dock)
 - Menu contextuel simple pour quitter l'application
+- Police système identique aux autres éléments de la barre de menus macOS
 
 ## Configuration requise
 

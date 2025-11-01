@@ -3,7 +3,14 @@
     "allow": [
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
-      "mcp__tavily__search"
+      "mcp__tavily__search",
+      "Bash(xcodebuild:*)",
+      "Bash(swiftc:*)",
+      "Bash(cp:*)",
+      "Bash(open:*)",
+      "Bash(/Users/labouc/Library/Developer/Xcode/DerivedData/MyBar-bnqmskydlcnlvnepxrcdzuvnbyje/Build/Products/Debug/MyBar.app/Contents/MacOS/MyBar:*)",
+      "Bash(git add:*)",
+      "Bash(diskutil:*)"
     ],
     "deny": [],
     "ask": []

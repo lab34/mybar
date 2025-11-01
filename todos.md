@@ -84,6 +84,11 @@
 - [x] Installer dans `/Applications/`
 - [x] Documenter le lancement automatique avec launchctl
 
+## Phase 12 : Amélioration Police Système ✅
+- [x] Remplacer la police monospacée par la police système macOS (SF Pro Text)
+- [x] Utiliser `NSFont.systemFont(ofSize: 0)` pour une intégration parfaite
+- [x] Mettre à jour la documentation pour refléter ce changement
+
 ## Améliorations futures (v1.1+)
 
 ### Améliorations UX

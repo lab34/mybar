@@ -5,27 +5,28 @@ MyBar est une application macOS native qui affiche l'espace disque disponible da
 
 ## Objectifs Principaux
 - **Surveillance** : Espace disque disponible sur le volume principal (/)
-- **Affichage** : Format texte "XX.X GB (-X.X GB)" dans la barre de menus
+- **Affichage** : Format texte "XX.X GB (-X.X GB)" directement dans la barre de menus (sans clic)
 - **Performance** : Consommation minimale CPU/batterie
-- **Mises à jour** : Toutes les 5 minutes, compatible veille
+- **Mises à jour** : Toutes les 5 secondes (test) → 5 minutes (production), compatible veille
 
 ## Contraintes Techniques
-- **Plateforme** : macOS 13.0+ (MenuBarExtra)
+- **Plateforme** : macOS 13.0+ (NSStatusItem + AppDelegate)
 - **Architecture** : Apple Silicon native
-- **Language** : Swift + SwiftUI
+- **Language** : Swift + SwiftUI + AppKit
 - **Énergie** : Compatible App Nap, pas de réveil système
 
 ## Structure du Projet
 ```
 mybar/
 ├── MyBar/
-│   ├── MyBarApp.swift
+│   ├── MyBarApp.swift              # Point d'entrée avec NSApplicationDelegateAdaptor
+│   ├── Info.plist                  # Configuration (LSUIElement, pas de storyboard)
 │   ├── Models/
-│   │   └── DiskSpaceMonitor.swift
-│   ├── Views/
-│   │   └── MenuBarView.swift
-│   └── Utils/
-│       └── StorageManager.swift
+│   │   └── DiskSpaceMonitor.swift  # Monitoring espace disque
+│   ├── Utils/
+│   │   └── StorageManager.swift    # Persistance et calcul delta
+│   └── Views/
+│       └── MenuBarView.swift       # Interface SwiftUI (legacy, non utilisée)
 ├── README.md
 ├── todos.md
 ├── archi.md
@@ -44,15 +45,17 @@ mybar/
 - Détection changement de jour (minuit)
 - Calcul variation : `actuel - début_jour`
 
-### 3. Interface MenuBar
-- Affichage minimaliste
-- Format : "156.2 GB (-2.1 GB)"
-- Mise à jour réactive SwiftUI
+### 3. Interface Barre de Menus
+- **Affichage direct** dans NSStatusItem (pas d'icône, pas de clic requis)
+- Format : "156.2 GB (-2.1 GB)" avec police monospacée
+- Mise à jour automatique via Timer
+- Menu contextuel simple (Quitter)
 
-### 4. Timer Économique
-- Intervalle : 300 secondes (5 minutes)
-- QoS : `.utility` (basse priorité)
-- Compatible App Nap et veille
+### 4. Architecture AppDelegate
+- **NSStatusItem** pour contrôle total de l'affichage
+- **Timer** toutes les 5 secondes (configurable)
+- Gestion du cycle de vie de l'application
+- Nettoyage automatique des ressources
 
 ## Bonnes Pratiques
 
@@ -69,17 +72,18 @@ mybar/
 - Timer économique
 
 ### Code
-- MVVM pattern avec SwiftUI
+- Pattern AppDelegate pour contrôler NSStatusItem
+- MVVM avec SwiftUI pour les composants
 - Single responsibility principle
 - Documentation intégrée
-- Tests unitaires simples
+- Architecture hybride SwiftUI + AppKit
 
 ## Dépendances
 - Aucune dépendance externe
 - Frameworks Apple uniquement :
-  - SwiftUI (interface)
-  - Foundation (FileManager, Timer)
-  - Combine (réactivité)
+  - SwiftUI (MyBarApp, modèles réactifs)
+  - AppKit (NSStatusItem, NSStatusBar)
+  - Foundation (FileManager, Timer, UserDefaults)
 
 ## Cibles de Performance
 - CPU : < 0.1% utilisation normale
@@ -92,6 +96,20 @@ mybar/
 - Vérifier le comportement pendant la veille
 - Valider les changements de jour (minuit)
 - Maintenir la simplicité avant tout
+- **Architecture actuelle** : NSStatusItem > MenuBarExtra pour affichage direct
+- **Timer** : Configurer 300s pour production (actuellement 5s pour tests)
+- **Info.plist** : LSUIElement = true pour cacher du Dock
+
+## Architecture Décisions
+### Pourquoi NSStatusItem vs MenuBarExtra ?
+- **NSStatusItem** permet d'afficher du texte directement dans la barre
+- **MenuBarExtra** nécessite une icône et un menu pop-up
+- L'utilisateur voulait voir l'information SANS cliquer
+
+### Pourquoi AppDelegate ?
+- Contrôle total du cycle de vie du NSStatusItem
+- Gestion propre des timers et ressources
+- Nettoyage automatique à la fermeture
 
 ## Commandes Utiles
 ```bash

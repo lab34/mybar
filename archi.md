@@ -36,7 +36,7 @@ MyBar est une application macOS native légère pour surveiller l'espace disque 
 **Fonctionnalités :**
 - Texte affiché directement : "XXX.X GB (+/-X.X GB)"
 - Mises à jour toutes les 5 secondes
-- Police monospacée pour une lisibilité optimale
+- Police système SF Pro Text pour une intégration parfaite
 
 ### 3. DiskSpaceMonitor.swift (Modèle)
 **Responsabilités :**
