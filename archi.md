@@ -70,8 +70,9 @@ struct DiskSpaceInfo {
 ### 5. Info.plist (Configuration)
 **Configuration clé :**
 - `LSUIElement: true` : Application cachée du Dock
+- `LSMinimumSystemVersion: 13.0` : macOS Ventura minimum
 - Pas de `NSMainStoryboardFile` : Interface purement programmatique
-- Signature de code pour la sécurité
+- Signature de code et entitlements pour la sécurité
 
 ## Flux de Données
 

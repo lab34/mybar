@@ -20,12 +20,60 @@ Application macOS native légère qui affiche l'espace disque disponible dans la
 
 ## Installation
 
-Clonez ce repository et ouvrez le projet dans Xcode :
+### Méthode 1 : Binaire précompilé
+
+1. Téléchargez le dernier `MyBar.app` depuis la section [Releases](https://github.com/labouc/mybar/releases)
+2. Glissez `MyBar.app` dans votre dossier `/Applications`
+3. Lancez l'application depuis Finder ou avec la commande :
+   ```bash
+   open /Applications/MyBar.app
+   ```
+
+### Méthode 2 : Compilation depuis les sources
+
+Clonez ce repository et compilez avec Xcode :
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/labouc/mybar.git
 cd mybar
 open MyBar.xcodeproj
+# Dans Xcode : Product → Build (⌘+B)
+# L'application sera dans : ~/Library/Developer/Xcode/DerivedData/MyBar-*/Build/Products/Release/MyBar.app
+```
+
+### Lancement automatique (optionnel)
+
+Pour lancer MyBar automatiquement au démarrage de macOS :
+
+```bash
+# Créer le fichier launchctl
+cat > ~/Library/LaunchAgents/com.labouc.mybar.plist << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.labouc.mybar</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/MyBar.app/Contents/MacOS/MyBar</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+EOF
+
+# Charger l'agent launchctl
+launchctl load ~/Library/LaunchAgents/com.labouc.mybar.plist
+```
+
+Pour arrêter le lancement automatique :
+```bash
+launchctl unload ~/Library/LaunchAgents/com.labouc.mybar.plist
+rm ~/Library/LaunchAgents/com.labouc.mybar.plist
 ```
 
 ## Utilisation
